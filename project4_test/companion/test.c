@@ -43,7 +43,7 @@ static int do_modify(const char *fname)
 		perror("lseek");
 		goto out1;
 	}
-	width = snprintf(tmpbuf, sizeof(tmpbuf), "%d", len);
+	width = snprintf(tmpbuf, sizeof(tmpbuf), "%d", (int)len);
 
 	for (i = 0; i < cnt; i++) {
 		pos[i] = rand() % len;
