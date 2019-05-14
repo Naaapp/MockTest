@@ -101,7 +101,7 @@ if [ $? -ne 0 ] ; then
 fi
 
 echo -n "Creating a 100KB file ... "
-./companion/test -f /mnt/file1 -l 100000 &> /dev/null
+./companion/test -f /mnt/file1 -l 100000000 &> /dev/null
 if [ $? -ne 0 ] ; then
 	echo "System Error 17, Please report to TAs"
 	exit 17
