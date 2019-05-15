@@ -37,6 +37,10 @@
 #include <linux/compat.h>
 #endif
 
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define D(fmt, ...) \
+	printk(KERN_ERR "[%s:%d:%s]: " fmt "\n", __FILENAME__, __LINE__, __func__, ##__VA_ARGS__)
+
 /*
  * The fourth extended filesystem constants/structures
  */
