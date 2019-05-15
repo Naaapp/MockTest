@@ -51,7 +51,6 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-project4_test/src/
 
 project4_test/companion/file5
 
