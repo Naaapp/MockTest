@@ -38,7 +38,7 @@
  */
 static int ext42_release_file(struct inode *inode, struct file *filp)
 {
-	D("release a file yo %s (inode num %ld)", filp->f_path.mnt->mnt_root->d_name.name, inode->i_ino);
+	D("release a file yo %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
 
 	if (ext42_test_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE)) {
 		ext42_alloc_da_blocks(inode);
@@ -55,6 +55,16 @@ static int ext42_release_file(struct inode *inode, struct file *filp)
 	}
 	if (is_dx(inode) && filp->private_data)
 		ext42_htree_free_dir_info(filp->private_data);
+
+	//filp is the file we want to make a tree
+	//We need to read the data of the file, put i in a structure,
+	//transform to a tree and write the tree in memory. 
+	//The function that we maybe can use : 
+	//.read_iter	= generic_file_read_iter, (in kernel mm/filemap.c)
+	//(struct kiocb *iocb, struct iov_iter *to)
+	//.write_iter	= ext42_file_write_iter, (here)
+	//with (struct kiocb *iocb, struct iov_iter *from) as argument
+
 
 	return 0;
 }
