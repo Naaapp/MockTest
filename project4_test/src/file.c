@@ -38,7 +38,7 @@
  */
 static int ext42_release_file(struct inode *inode, struct file *filp)
 {
-	D("release a file yo %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
+	D("release a file yo %s (inode num %ld)", filp->f_path.mnt->mnt_root->d_name.name, inode->i_ino);
 
 	if (ext42_test_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE)) {
 		ext42_alloc_da_blocks(inode);
