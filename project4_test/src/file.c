@@ -38,7 +38,7 @@
  */
 static int ext42_release_file(struct inode *inode, struct file *filp)
 {
-	D("release a file yo %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
+	// D("release a file yo %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
 
 	if (ext42_test_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE)) {
 		ext42_alloc_da_blocks(inode);
@@ -111,7 +111,7 @@ ext42_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	int overwrite = 0;
 	ssize_t ret;
 
-	D("write to %s", file->f_path.dentry->d_name.name);
+	// D("write to %s", file->f_path.dentry->d_name.name);
 
 	/*
 	 * Unaligned direct AIO must be serialized; see comment above
@@ -380,7 +380,7 @@ static int ext42_file_open(struct inode * inode, struct file * filp)
 	char buf[64], *cp;
 	int ret;
 
-	D("open a file %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
+	// D("open a file %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
 
 	if (unlikely(!(sbi->s_mount_flags & EXT4_MF_MNTDIR_SAMPLED) &&
 		     !(sb->s_flags & MS_RDONLY))) {
