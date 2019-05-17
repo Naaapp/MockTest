@@ -1,3 +1,5 @@
+//Uliege INFO0940-1: Operating Systems
+//Project 4 : Théo Stassen and Ludovic Sangiovanni
 
 typedef int (*Hash_Function) (unsigned char *, unsigned int, unsigned char *);
 

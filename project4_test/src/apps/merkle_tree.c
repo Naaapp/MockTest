@@ -1,3 +1,6 @@
+//Uliege INFO0940-1: Operating Systems
+//Project 4 : Théo Stassen and Ludovic Sangiovanni
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -93,24 +96,6 @@ void tree_cmp(merkle_tree *a, merkle_tree *b, size_t i, BlockList* bl) {
         return ;
 }
 
-// set tree data with specific block number
-//
-int set_tree_data(merkle_tree *mt, size_t block_num, unsigned char *data) {
-
-    if (block_num > mt->data_blocks)
-        return -1;
-    size_t i = (1 << (mt->tree_height - 1)) + block_num - 1;
-    if (mt->nodes[i].data)
-        free(mt->nodes[i].data);
-    mt->nodes[i].data = data;
-    if (hash_node(mt, i) == -1)
-        return -1;
-    for (i>>=1; i>0; i>>=1)
-        if (hash_node(mt, i) == -1)
-            return -1;
-    return 0;
-}
-
 //free the Merkle Tree Object...
 //
 void freeMerkleTree(merkle_tree *mt) {
@@ -126,7 +111,6 @@ void freeMerkleTree(merkle_tree *mt) {
     }
     return;
 }
-
 
 //update a tree node hash
 //leaf or inside nodes ...
@@ -164,7 +148,7 @@ static int hash_node(merkle_tree *mt, size_t i) {
     return 0;
 }
 
-// for test use
+// For test use
 // print a merkle tree nodes' hash
 // as a list with node order
 // static void print_tree(merkle_tree *mt, FILE* fp) {
@@ -178,6 +162,10 @@ static int hash_node(merkle_tree *mt, size_t i) {
 //     return;
 // }
 
+//Save a tree in the specified file.
+// In the format 
+//- first line : number of data blocks
+//- other lines: the hash of each nodes (starting from the top)
 static void save_tree(merkle_tree *mt, FILE* fp){
 
     unsigned int i;
@@ -189,6 +177,8 @@ static void save_tree(merkle_tree *mt, FILE* fp){
     fclose(fp);
 }
 
+
+//Initialize the linked list of numbers
 BlockList * bl_init()
 {
     BlockList *list = malloc(sizeof(*list));
@@ -206,10 +196,9 @@ BlockList * bl_init()
     return list;
 }
 
-
+//Insert an element in the back of the linked list
 void bl_insert(BlockList *list, int newnumber)
 {
-    /* Création du nouvel élément */
     Block *new = malloc(sizeof(*new));
     if (list == NULL || new == NULL)
     {
@@ -225,8 +214,7 @@ void bl_insert(BlockList *list, int newnumber)
     current->next = new;
 }
 
-
-
+//Read the linked list
 void bl_read(BlockList *list)
 {
     if (list == NULL)

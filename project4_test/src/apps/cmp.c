@@ -1,12 +1,14 @@
+//Uliege INFO0940-1: Operating Systems
+//Project 4 : Théo Stassen and Ludovic Sangiovanni
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
 #include "merkle_tree.c"
-//#include "md5.h"
 
-
+//The block size is fixed to 1024. 
 #define BLOCK_SIZE 1024
 
 int convertDecimalToOctal(int decimalNumber)
@@ -25,6 +27,10 @@ int convertDecimalToOctal(int decimalNumber)
 
 int main (int argc, char *argv[])
 {
+    /**
+     Part 1 : write the input files, create corresponding trees, save the trees in .mktree files
+    */
+
     //Check the arguments
     if (argc != 4 || strcmp(argv[1], "-l") != 0){
         printf("Wrong arguments\n");
@@ -45,6 +51,7 @@ int main (int argc, char *argv[])
       return(-1);
     }
 
+    //Variable definition
 
     int c1;
     int c2;
@@ -65,15 +72,19 @@ int main (int argc, char *argv[])
     }
     fseek(fp1, 0, SEEK_SET );
 
-    //find the number of data_blocks and the three height corresponding to the file size
+    //Find the number of data_blocks and the three height corresponding to the file size
+
     int data_blocks =  file_size / BLOCK_SIZE + (int)(file_size % BLOCK_SIZE != 0);
     int three_height = abs(log2(data_blocks)) + 1 + (int)(log2(data_blocks) / abs(log2(data_blocks)) != 1);
+
+    //data blocks and merkle tree initialization
 
     unsigned char *data1[data_blocks], *data2[data_blocks], buffer1[BLOCK_SIZE], buffer2[BLOCK_SIZE];
     merkle_tree mt_a = {0, three_height, MD5_DIGEST_LENGTH, BLOCK_SIZE, data_blocks, MD5One, NULL};
     merkle_tree mt_b = {0, three_height, MD5_DIGEST_LENGTH, BLOCK_SIZE, data_blocks, MD5One, NULL};
 
-    //Read the files to blocks of data
+    //Read the files and put in blocks of data
+
     for (i=0; i<data_blocks; i++) {
         for (j=0; j<BLOCK_SIZE; j++){
 
@@ -86,11 +97,9 @@ int main (int argc, char *argv[])
                 c2 = fgetc(fp2);
                 if( feof(fp1) ) {
                     endoffile = 1;
-                    // printf("end of file %d %d\n", i, j );
                 }
                 buffer1[j] = c1;
                 buffer2[j] = c2;
-                // printf("%d %d %d %d\n",i,j,buffer1[j], buffer2[j]);
             }
         }
         data1[i] = (unsigned char *)malloc(sizeof(char) * BLOCK_SIZE);
@@ -99,32 +108,33 @@ int main (int argc, char *argv[])
         memcpy(data2[i], buffer2, BLOCK_SIZE);
     }
 
+    //Build trees with data
 
-
-    // printf("%d %d", data1[0][0],data2[0][0]);
-
-    //build tree mt_a with data
     build_tree_from_data(&mt_a, data1);
-
     build_tree_from_data(&mt_b, data2);
 
-    //note : too much data to priny
+    //You can print the resulting trees
+
     // print_tree(&mt_a, stdout);
     // print_tree(&mt_b, stdout);
 
-    //save the trees
+    //Save the trees in .mktree files
 
-    strcat(filepath1,".mklt");
-    strcat(filepath2,".mklt");
-
+    strcat(filepath1,".mktree");
+    strcat(filepath2,".mktree");
     FILE * fp3 = fopen(filepath1, "w+");
     FILE * fp4 = fopen(filepath2, "w+");
+
     save_tree(&mt_a,fp3);
     save_tree(&mt_b,fp4);
     fseek(fp3, 0, SEEK_SET );
     fseek(fp4, 0, SEEK_SET );
 
-    //build the trees from the .mklt files
+    /**
+    Part 2 : extract the trees from .mktree files, build the trees object from that
+    */
+
+    //Build the trees from the .mktree files
 
     merkle_tree mt_c = {0, three_height, MD5_DIGEST_LENGTH*2, BLOCK_SIZE, data_blocks, MD5One, NULL};
     merkle_tree mt_d = {0, three_height, MD5_DIGEST_LENGTH*2, BLOCK_SIZE, data_blocks, MD5One, NULL};
@@ -132,19 +142,20 @@ int main (int argc, char *argv[])
     build_tree_from_file(&mt_c,fp3);
     build_tree_from_file(&mt_d,fp4);
 
+    //You can print the resulting trees
+
     // print_tree(&mt_c, stdout);
     // print_tree(&mt_d, stdout);
 
-    //linked list to put the block with difference numbers
+    //Create a linked list to put the number of block whith differences
+
     BlockList * bl = bl_init();
-    // bl_read(bl);
 
-    //compare two merkle trees  
+    //Compare two merkle trees
+
     tree_cmp(&mt_c, &mt_d, 1, bl);
-    // bl_read(bl);
 
-    //read the corresponding blocks
-
+    //Read the corresponding blocks
 
     fseek(fp1, 0, SEEK_SET );
     fseek(fp2, 0, SEEK_SET );
@@ -167,11 +178,10 @@ int main (int argc, char *argv[])
         current = current->next;
     }
 
-    
-    //free merkle tree objects
+    //Free merkle tree objects
+
     freeMerkleTree(&mt_a);
     freeMerkleTree(&mt_b);
-
     fclose(fp1);
     fclose(fp2);
     fclose(fp3);
