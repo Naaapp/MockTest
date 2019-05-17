@@ -1,6 +1,7 @@
 //Uliege INFO0940-1: Operating Systems
 //Project 4 : Théo Stassen and Ludovic Sangiovanni
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,7 +76,8 @@ int main (int argc, char *argv[])
     //Find the number of data_blocks and the three height corresponding to the file size
 
     int data_blocks =  file_size / BLOCK_SIZE + (int)(file_size % BLOCK_SIZE != 0);
-    int three_height = abs(log2(data_blocks)) + 1 + (int)(log2(data_blocks) / abs(log2(data_blocks)) != 1);
+
+    int three_height = log2(data_blocks) + 2;
 
     //data blocks and merkle tree initialization
 
@@ -89,8 +91,8 @@ int main (int argc, char *argv[])
         for (j=0; j<BLOCK_SIZE; j++){
 
             if(endoffile){
-                buffer1[j] = 'a';
-                buffer2[j] = 'a';
+                buffer1[j] = 97;
+                buffer2[j] = 97;
             }
             else{
                 c1 = fgetc(fp1);

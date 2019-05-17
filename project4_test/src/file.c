@@ -30,6 +30,93 @@
 #include "ext4_jbd2.h"
 #include "xattr.h"
 #include "acl.h"
+#include <asm/uaccess.h>
+#include <linux/buffer_head.h>
+
+int isTree(const char *str){
+	int i=0;
+	for(i=0; i< 255 && str[i] != '\0'; ++i);
+	if(i < 5)
+		return 0;
+	if(str[i-6] == 46 && str[i-5] == 109 && str[i-4] == 116 && str[i-3] == 114 && str[i-2] == 101 && str[i-1] == 101)
+		return 1;
+	return 0;
+}
+
+char* getTreeName(const char *str, char *ret){
+	int i=0;
+	for(i=0; i< 255 && str[i] != '\0'; ++i){
+		ret[i] = str[i];
+	}
+	if(i >248)
+		i = 248;
+	ret[i] = 46;
+	ret[i+1] = 109;
+	ret[i+2] = 116;
+	ret[i+3] = 114;
+	ret[i+4] = 101;
+	ret[i+5] = 101;
+	ret[i+6] = '\0';
+
+	return ret;
+}
+
+struct file *file_open(const char *path, int flags, int rights){
+	struct file *filp = NULL;
+	mm_segment_t oldfs;
+	int e = 0;
+	
+	oldfs = get_fs();
+	set_fs(get_ds());
+	filp = filp_open(path, flags, rights);
+	set_fs(oldfs);
+	if(IS_ERR(filp)){
+		e = PTR_ERR(filp);
+		return NULL;
+	}
+	return filp;
+}
+
+void file_close(struct file *file){
+	filp_close(file, NULL);
+}
+
+int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size){
+	mm_segment_t oldfs;
+	int ret;
+	oldfs = get_fs();
+	set_fs(get_ds());
+
+	ret = vfs_read(file, data, size, &offset);
+
+	set_fs(oldfs);
+	return ret;
+}
+
+int file_write(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size){
+	mm_segment_t oldfs;
+	int ret;
+
+	oldfs = get_fs();
+	set_fs(get_ds());
+	ret = vfs_write(file, data, size, &offset);
+
+	set_fs(oldfs);
+	return ret;
+}
+
+//size = size of array, len = size of string (both array of same size
+void hashMerkle(const char *toMerkle, char *dest, int len, int size){
+	int i=0;
+	//clear dest
+	for(i=0; i < size; ++i)
+		dest[i] = '\0';
+	
+	//hash to be done here from toMerkle on dest 
+	for(i=0; i < len ; ++i)
+		dest[i] = toMerkle[i];
+
+}
 
 /*
  * Called when an inode is released. Note that this is different
@@ -38,8 +125,7 @@
  */
 static int ext42_release_file(struct inode *inode, struct file *filp)
 {
-	// D("release a file yo %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
-
+	D("release a file %s (inode num %ld)%d", filp->f_path.dentry->d_name.name, inode->i_ino,sizeof(filp->f_path.dentry->d_name.name));
 	if (ext42_test_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE)) {
 		ext42_alloc_da_blocks(inode);
 		ext42_clear_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE);
@@ -56,14 +142,25 @@ static int ext42_release_file(struct inode *inode, struct file *filp)
 	if (is_dx(inode) && filp->private_data)
 		ext42_htree_free_dir_info(filp->private_data);
 
-	//filp is the file we want to make a tree
-	//We need to read the data of the file, put i in a structure,
-	//transform to a tree and write the tree in memory. 
-	//The function that we maybe can use : 
-	//.read_iter	= generic_file_read_iter, (in kernel mm/filemap.c)
-	//(struct kiocb *iocb, struct iov_iter *to)
-	//.write_iter	= ext42_file_write_iter, (here)
-	//with (struct kiocb *iocb, struct iov_iter *from) as argument
+
+	if(!isTree(filp->f_path.dentry->d_name.name)){
+		//D("inode size : %ld (inode blocks:%ld)", inode->i_size, inode->i_blocks);
+		//int blen = 255;
+		//char buffer[blen] = "du contenu";
+				
+		char treeName[255];
+		getTreeName(filp->f_path.dentry->d_name.name, treeName);
+		struct file *fTree = file_open(treeName, O_CREAT, S_IRUSR);
+		
+		//int ko = file_read(toTree, 0, buffer, inode->i_size);
+
+		//D("(%d) %s", ko, buffer);
+		
+		//hashMerkle(buffer, toWrite, inode->i_size, inode->i_size);
+		file_write(fTree, 0, "contenu", 7);
+
+		file_close(fTree);
+	}
 
 
 	return 0;
@@ -111,7 +208,7 @@ ext42_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	int overwrite = 0;
 	ssize_t ret;
 
-	// D("write to %s", file->f_path.dentry->d_name.name);
+	D("write to %s", file->f_path.dentry->d_name.name);
 
 	/*
 	 * Unaligned direct AIO must be serialized; see comment above
@@ -380,8 +477,7 @@ static int ext42_file_open(struct inode * inode, struct file * filp)
 	char buf[64], *cp;
 	int ret;
 
-	// D("open a file %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
-
+	D("open a file %s (inode num %ld)", filp->f_path.dentry->d_name.name, inode->i_ino);
 	if (unlikely(!(sbi->s_mount_flags & EXT4_MF_MNTDIR_SAMPLED) &&
 		     !(sb->s_flags & MS_RDONLY))) {
 		sbi->s_mount_flags |= EXT4_MF_MNTDIR_SAMPLED;

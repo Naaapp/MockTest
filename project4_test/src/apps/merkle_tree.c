@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #include "merkle_tree.h"
 
@@ -13,6 +12,8 @@
 
 static int hash_node(merkle_tree *mt, size_t i);
 // static void print_tree(merkle_tree *mt);
+
+
 
 //build a merkle tree with settings in 'mt'
 //use data blocks
