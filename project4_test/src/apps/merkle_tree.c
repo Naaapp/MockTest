@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "merkle_tree.h"
 
 #include "md5.c"
+
 
 static int hash_node(merkle_tree *mt, size_t i);
 // static void print_tree(merkle_tree *mt);
@@ -39,6 +41,12 @@ int build_tree_from_file(merkle_tree *mt, FILE *fp){
 
     size_t len = 0;
     char* line = NULL;
+
+    if(getline(&line, &len, fp) != -1){
+        strtok(line, "\n");
+        mt->data_blocks = atoi(line);
+        mt->tree_height = abs(log2(mt->data_blocks)) + 1 + (int)(log2(mt->data_blocks) / abs(log2(mt->data_blocks)) != 1);
+    }
 
     if (mt->data_blocks > (unsigned int)(1 << (mt->tree_height - 1)))
         return -1;
@@ -173,6 +181,7 @@ static int hash_node(merkle_tree *mt, size_t i) {
 static void save_tree(merkle_tree *mt, FILE* fp){
 
     unsigned int i;
+    fprintf(fp, "%lu\n", mt->data_blocks );
     for(i=1; i<=mt->n; i++){
         MD5Print(mt->nodes[i].hash, fp);
     }
