@@ -59,7 +59,7 @@ typedef struct {
   unsigned char buffer[64];                         /* input buffer */
 } MD5_CTX;
 
-int MD5Print(unsigned char *digest);
+int MD5Print(unsigned char *digest, FILE *fp);
 int MD5One(unsigned char *data, unsigned int dataLen, unsigned char *md5str);
 void MD5Init PROTO_LIST ((MD5_CTX *));
 void MD5Update PROTO_LIST

@@ -11,7 +11,7 @@ static int hash_node(merkle_tree *mt, size_t i);
 
 //build a merkle tree with settings in 'mt'
 //use data blocks
-int build_tree(merkle_tree *mt, unsigned char *data[]) {
+int build_tree_from_data(merkle_tree *mt, unsigned char *data[]) {
 
     if (mt->data_blocks > (unsigned int)(1 << (mt->tree_height - 1)))
         return -1;
@@ -29,6 +29,33 @@ int build_tree(merkle_tree *mt, unsigned char *data[]) {
         mt->nodes[i].hash = NULL;
         if (hash_node(mt, i) == -1)
             return -1;
+    }
+    return 0;
+}
+
+//build a merkle tree with settings in 'mt'
+//use input File
+int build_tree_from_file(merkle_tree *mt, FILE *fp){
+
+    size_t len = 0;
+    char* line = NULL;
+
+    if (mt->data_blocks > (unsigned int)(1 << (mt->tree_height - 1)))
+        return -1;
+    unsigned int i, leaf_start;
+    leaf_start = (1 << (mt->tree_height - 1));
+    mt->n = leaf_start + mt->data_blocks - 1;
+    mt->nodes = (merkle_tree_node *)malloc(sizeof(merkle_tree_node) * (mt->n + 1));
+    for (i = 1; i<=mt->n; i++){
+        if(getline(&line, &len, fp) != -1){
+            strtok(line, "\n");
+            if(strcmp(line,"<empty hash>")==0)
+                mt->nodes[i].hash = NULL;
+            else {
+                mt->nodes[i].hash = (unsigned char *)malloc(sizeof(char *) * mt->hash_size);
+                memcpy(mt->nodes[i].hash, (unsigned char *)line, mt->hash_size);
+            }
+        }
     }
     return 0;
 }
@@ -120,6 +147,7 @@ static int hash_node(merkle_tree *mt, size_t i) {
         if (mt->nodes[i].data) {
             if (!mt->nodes[i].hash)
                 mt->nodes[i].hash = (unsigned char *)malloc(sizeof(char *) * mt->hash_size);
+
             mt->hash_function(mt->nodes[i].data, mt->data_block_size, mt->nodes[i].hash);
         }
         else
@@ -128,18 +156,29 @@ static int hash_node(merkle_tree *mt, size_t i) {
     return 0;
 }
 
-// // for test use
-// // print a merkle tree nodes' hash
-// // as a list with node order
-// static void print_tree(merkle_tree *mt) {
-
+// for test use
+// print a merkle tree nodes' hash
+// as a list with node order
+// static void print_tree(merkle_tree *mt, FILE* fp) {
 //     unsigned int i;
 //     printf("--------------------------------\n");
-//     for(i=1; i<=mt->n; i++)
-//         MD5Print(mt->nodes[i].hash);
+//     for(i=1; i<=mt->n; i++){
+//         fprintf(fp, "%s\n",mt->nodes[i].hash);
+//         printf("_____\n" );
+//     }
 //     printf("--------------------------------\n");
 //     return;
 // }
+
+static void save_tree(merkle_tree *mt, FILE* fp){
+
+    unsigned int i;
+    for(i=1; i<=mt->n; i++){
+        MD5Print(mt->nodes[i].hash, fp);
+    }
+    return;
+    fclose(fp);
+}
 
 BlockList * bl_init()
 {

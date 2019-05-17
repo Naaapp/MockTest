@@ -1,11 +1,16 @@
-PROGS = cmp 
+CC = cc
+
 CLEANFILES = $(PROGS) *.o
 
 CFLAGS = -O2 -pipe
-CFLAGS += -Werror -Wall -Wunused-function
+CFLAGS +=  -Wall -Wunused-function
 CFLAGS += -Wextra
 
-all: $(PROGS)
+LDFLAGS = -lm
+
+all: cmp.o
+	$(CC) $(CFLAGS) -o cmp cmp.o $(LDFLAGS)
+
 
 clean:
 	-@rm -rf $(CLEANFILES)

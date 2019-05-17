@@ -98,16 +98,16 @@ Rotation is separate from addition to prevent recomputation.
  * util function
  */
 //added by vectorguo ...
-int MD5Print(unsigned char *digest)
+int MD5Print(unsigned char *digest, FILE *fp)
 {
     int i;
     if (!digest) {
-        printf("<empty hash>\n");
+        fprintf(fp,"<empty hash>\n");
         return -1;
     }
      for(i = 0; i< MD5_DIGEST_LENGTH; i++)
-        printf("%02x", digest[i]);
-     printf("\n");
+        fprintf(fp,"%02x", digest[i]);
+     fprintf(fp,"\n");
      return 0;
 }
 
